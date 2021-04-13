@@ -90,10 +90,12 @@ install :
 
 # Canned recipe to run all tests, and then trigger a make error if any failed.
 define do-run-tests
+all_passed=true ; \
 for m in ${modules} ; \
 	do printf '%s\n' "Running test $$m..." ; \
-	./$${m}.test ; \
-done
+	./$${m}.test || all_passed=false ; \
+done ; \
+$${all_passed}
 endef
 
 # Build all tests, then run them all.
