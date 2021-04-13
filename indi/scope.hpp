@@ -16,3 +16,16 @@
  * along with libindi-scope.  If not, see <https://www.gnu.org/licenses/>.
  *
  ****************************************************************************/
+
+#ifndef INDI_INC_scope
+#define INDI_INC_scope
+
+namespace indi {
+inline namespace v1 {
+
+
+
+} // inline namespace v1
+} // namespace indi
+
+#endif // include guard
