@@ -20,10 +20,31 @@
 #ifndef INDI_INC_scope
 #define INDI_INC_scope
 
+#include <type_traits>
+
 namespace indi {
 inline namespace v1 {
 
+template <typename EF>
+class scope_exit
+{
+public:
+	template <typename EFP>
+	explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>) {}
 
+	scope_exit(scope_exit&& rhs) noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>) {}
+
+	~scope_exit() {}
+
+	auto release() noexcept -> void {}
+
+	// Non-copyable.
+	scope_exit(scope_exit const&) = delete;
+	auto operator=(scope_exit const&) -> scope_exit& = delete;
+
+	// No move-assignment.
+	auto operator=(scope_exit&&) -> scope_exit& = delete;
+};
 
 } // inline namespace v1
 } // namespace indi
