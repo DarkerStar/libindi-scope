@@ -17,4 +17,14 @@
  *
  ****************************************************************************/
 
-auto main() -> int {}
+#define BOOST_TEST_MODULE scope_fail
+#ifdef BOOST_TEST_DYN_LINK
+#	include <boost/test/unit_test.hpp>
+#else
+#	include <boost/test/included/unit_test.hpp>
+#endif // BOOST_TEST_DYN_LINK
+
+BOOST_AUTO_TEST_CASE(dummy)
+{
+	// Do nothing.
+}
