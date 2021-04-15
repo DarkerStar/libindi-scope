@@ -74,3 +74,56 @@ BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
 
 	BOOST_TEST(call_count == 1);
 }
+
+/*****************************************************************************
+ * Release operation tests
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE(release_operation_CASE_success)
+{
+	auto call_count = 0;
+	auto func = [&call_count] { ++call_count; };
+
+	{
+		auto scope_guard = indi::scope_exit{func};
+
+		// func should not be called when initializing
+		BOOST_TEST(call_count == 0);
+
+		scope_guard.release();
+
+		// func should not be called when released
+		BOOST_TEST(call_count == 0);
+	}
+
+	// func should not be called when released
+	BOOST_TEST(call_count == 0);
+}
+
+BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
+{
+	auto call_count = 0;
+	auto func = [&call_count] { ++call_count; };
+
+	try
+	{
+		auto scope_guard = indi::scope_exit{func};
+
+		// func should not be called when initializing
+		BOOST_TEST(call_count == 0);
+
+		scope_guard.release();
+
+		// func should not be called when released
+		BOOST_TEST(call_count == 0);
+
+		throw indi_test::test_exception{};
+	}
+	catch (indi_test::test_exception const&)
+	{
+		// func should not be called when released
+		BOOST_TEST(call_count == 0);
+	}
+
+	BOOST_TEST(call_count == 0);
+}
