@@ -26,7 +26,51 @@
 
 #include <indi/scope.hpp>
 
-BOOST_AUTO_TEST_CASE(dummy)
+namespace indi_test {
+
+struct test_exception {};
+
+} // namespace indi_test
+
+/*****************************************************************************
+ * Basic operation tests
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE(basic_operation_CASE_success)
 {
-	// Do nothing.
+	auto call_count = 0;
+	auto func = [&call_count] { ++call_count; };
+
+	{
+		auto scope_guard = indi::scope_exit{func};
+
+		// func should not be called before the scope exits
+		BOOST_TEST(call_count == 0);
+	}
+
+	// func should have been called when the scope exits
+	BOOST_TEST(call_count == 1);
+}
+
+BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
+{
+	auto call_count = 0;
+	auto func = [&call_count] { ++call_count; };
+
+	try
+	{
+		auto scope_guard = indi::scope_exit{func};
+
+		// func should not be called before the scope exits
+		BOOST_TEST(call_count == 0);
+
+		throw indi_test::test_exception{};
+	}
+	catch (indi_test::test_exception const&)
+	{
+		// func should have been called when the scope exits
+		BOOST_TEST(call_count == 1);
+	}
+
+	BOOST_TEST(call_count == 1);
 }

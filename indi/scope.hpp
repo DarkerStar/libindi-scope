@@ -46,6 +46,9 @@ public:
 	auto operator=(scope_exit&&) -> scope_exit& = delete;
 };
 
+template <typename EF>
+scope_exit(EF) -> scope_exit<EF>;
+
 } // inline namespace v1
 } // namespace indi
 
