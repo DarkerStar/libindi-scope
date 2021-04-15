@@ -21,6 +21,7 @@
 #define INDI_INC_scope
 
 #include <type_traits>
+#include <utility>
 
 namespace indi {
 inline namespace v1 {
@@ -30,13 +31,22 @@ class scope_exit
 {
 public:
 	template <typename EFP>
-	explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>) {}
+	explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
+		: _func{std::forward<EFP>(f)}
+	{}
 
 	scope_exit(scope_exit&& rhs) noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>) {}
 
-	~scope_exit() {}
+	~scope_exit()
+	{
+		if (_call)
+			_func();
+	}
 
-	auto release() noexcept -> void {}
+	auto release() noexcept -> void
+	{
+		_call = false;
+	}
 
 	// Non-copyable.
 	scope_exit(scope_exit const&) = delete;
@@ -44,6 +54,10 @@ public:
 
 	// No move-assignment.
 	auto operator=(scope_exit&&) -> scope_exit& = delete;
+
+private:
+	EF _func;
+	bool _call = true;
 };
 
 template <typename EF>
