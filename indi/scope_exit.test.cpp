@@ -28,6 +28,10 @@
 
 namespace indi_test {
 
+// Test exception type.
+//
+// Used to have a unique type for exceptions that can't possibly be thrown
+// by non-test code.
 struct test_exception {};
 
 } // namespace indi_test
