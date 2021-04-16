@@ -76,7 +76,7 @@ public:
 	{
 		// 7.5.2.5 requirements.
 		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_exit>);
-		static_assert(std::is_constructible_v<EF, EFP>);
+		static_assert(std::is_nothrow_constructible_v<EF, EFP> or std::is_constructible_v<EF, EFP&>);
 	}
 	catch (...)
 	{
