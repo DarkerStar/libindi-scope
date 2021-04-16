@@ -30,6 +30,10 @@ template <typename EF>
 class scope_exit
 {
 public:
+	// 7.5.2.3 requirements.
+	static_assert((std::is_object_v<EF> and std::is_destructible_v<EF>) or std::is_lvalue_reference_v<EF>);
+	static_assert(std::is_invocable_v<std::remove_reference_t<EF>>);
+
 	template <typename EFP>
 	explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
 		: _exit_function{std::forward<EFP>(f)}
