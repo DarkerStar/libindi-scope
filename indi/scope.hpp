@@ -68,14 +68,19 @@ public:
 	static_assert(std::is_invocable_v<std::remove_reference_t<EF>>);
 
 	template <typename EFP>
-	explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
-		:
+	explicit scope_exit(EFP&& f)
+		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
+	try :
 		_exit_function{_detail_X_scope::safe_move_construct_forward<EF, EFP>(f)},
 		_execute_on_destruction{true}
 	{
 		// 7.5.2.5 requirements.
 		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_exit>);
 		static_assert(std::is_constructible_v<EF, EFP>);
+	}
+	catch (...)
+	{
+		f();
 	}
 
 	scope_exit(scope_exit&& rhs) noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>) {}
