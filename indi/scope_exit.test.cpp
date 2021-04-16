@@ -32,6 +32,7 @@ namespace indi_test {
 //
 // Used to have a unique type for exceptions that can't possibly be thrown
 // by non-test code.
+
 struct exception {};
 
 } // namespace indi_test
@@ -42,41 +43,31 @@ struct exception {};
 
 BOOST_AUTO_TEST_CASE(basic_operation_CASE_success)
 {
-	auto call_count = 0;
-	auto func = [&call_count] { ++call_count; };
+	auto called = false;
 
 	{
-		auto scope_guard = indi::scope_exit{func};
-
-		// func should not be called before the scope exits
-		BOOST_TEST(call_count == 0);
+		auto const _ = indi::scope_exit{[&called] { called = true; }};
+		BOOST_TEST(not called, "function called before scope exit");
 	}
 
-	// func should have been called when the scope exits
-	BOOST_TEST(call_count == 1);
+	BOOST_TEST(called);
 }
 
 BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
 {
-	auto call_count = 0;
-	auto func = [&call_count] { ++call_count; };
+	auto called = false;
 
 	try
 	{
-		auto scope_guard = indi::scope_exit{func};
-
-		// func should not be called before the scope exits
-		BOOST_TEST(call_count == 0);
+		auto const _ = indi::scope_exit{[&called] { called = true; }};
+		BOOST_TEST(not called, "function called before scope exit");
 
 		throw indi_test::exception{};
 	}
 	catch (indi_test::exception const&)
 	{
-		// func should have been called when the scope exits
-		BOOST_TEST(call_count == 1);
+		BOOST_TEST(called);
 	}
-
-	BOOST_TEST(call_count == 1);
 }
 
 /*****************************************************************************
@@ -85,49 +76,35 @@ BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
 
 BOOST_AUTO_TEST_CASE(release_operation_CASE_success)
 {
-	auto call_count = 0;
-	auto func = [&call_count] { ++call_count; };
+	auto called = false;
 
 	{
-		auto scope_guard = indi::scope_exit{func};
-
-		// func should not be called when initializing
-		BOOST_TEST(call_count == 0);
+		auto scope_guard = indi::scope_exit{[&called] { called = true; }};
+		BOOST_TEST(not called, "function called before scope exit");
 
 		scope_guard.release();
-
-		// func should not be called when released
-		BOOST_TEST(call_count == 0);
+		BOOST_TEST(not called, "function called by release");
 	}
 
-	// func should not be called when released
-	BOOST_TEST(call_count == 0);
+	BOOST_TEST(not called, "function called despite release");
 }
 
 BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 {
-	auto call_count = 0;
-	auto func = [&call_count] { ++call_count; };
+	auto called = false;
 
 	try
 	{
-		auto scope_guard = indi::scope_exit{func};
-
-		// func should not be called when initializing
-		BOOST_TEST(call_count == 0);
+		auto scope_guard = indi::scope_exit{[&called] { called = true; }};
+		BOOST_TEST(not called, "function called before scope exit");
 
 		scope_guard.release();
-
-		// func should not be called when released
-		BOOST_TEST(call_count == 0);
+		BOOST_TEST(not called, "function called by release");
 
 		throw indi_test::exception{};
 	}
 	catch (indi_test::exception const&)
 	{
-		// func should not be called when released
-		BOOST_TEST(call_count == 0);
+		BOOST_TEST(not called, "function called despite release");
 	}
-
-	BOOST_TEST(call_count == 0);
 }
