@@ -26,6 +26,39 @@
 namespace indi {
 inline namespace v1 {
 
+namespace _detail_X_scope {
+
+// safe_move_construct_forward<T, U>(U&&)
+//
+// Works almost identically to `std::forward<U>(u)`, except that if
+// constructing a `T` from a `U&&` may throw an exception, it will return a
+// lvalue reference (not a rvalue reference).
+//
+// When used as the initializer of a data-member:
+//      template <typename U>
+//      type(U&& u) : _t{safe_move_construct_forward<T, U>(u)} {}
+// it will construct `_t` with an rvalue if and only if `U` is not an lvalue
+// reference AND the construction will not throw. Otherwise, it will construct
+// `_t` with an lvalue. (In other words, it will only move-construct `_t` if
+// that will not throw, otherwise it will copy-construct `_t`.)
+
+// Lvalue references stay lvalue references.
+template <typename T, typename U>
+auto safe_move_construct_forward(U& u) noexcept -> U& { return u; }
+
+// Rvalue references where `T{std::move(u)}` may throw are converted to lvalue
+// references.
+template <typename T, typename U>
+	requires (not std::is_nothrow_constructible_v<T, U>)
+auto safe_move_construct_forward(U&& u) noexcept -> U& { return u; }
+
+// Rvalue references where `T{std::move(u)}` will not throw are passed on as
+// rvalue references.
+template <typename T, typename U>
+auto safe_move_construct_forward(U&& u) noexcept -> U&& { return static_cast<U&&>(u); }
+
+} // namespace _detail_X_scope
+
 template <typename EF>
 class scope_exit
 {
@@ -36,7 +69,9 @@ public:
 
 	template <typename EFP>
 	explicit scope_exit(EFP&& f) noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
-		: _exit_function{std::forward<EFP>(f)}
+		:
+		_exit_function{_detail_X_scope::safe_move_construct_forward<EF, EFP>(f)},
+		_execute_on_destruction{true}
 	{
 		// 7.5.2.5 requirements.
 		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_exit>);
