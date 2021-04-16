@@ -32,7 +32,7 @@ namespace indi_test {
 //
 // Used to have a unique type for exceptions that can't possibly be thrown
 // by non-test code.
-struct test_exception {};
+struct exception {};
 
 } // namespace indi_test
 
@@ -68,9 +68,9 @@ BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
 		// func should not be called before the scope exits
 		BOOST_TEST(call_count == 0);
 
-		throw indi_test::test_exception{};
+		throw indi_test::exception{};
 	}
-	catch (indi_test::test_exception const&)
+	catch (indi_test::exception const&)
 	{
 		// func should have been called when the scope exits
 		BOOST_TEST(call_count == 1);
@@ -121,9 +121,9 @@ BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 		// func should not be called when released
 		BOOST_TEST(call_count == 0);
 
-		throw indi_test::test_exception{};
+		throw indi_test::exception{};
 	}
-	catch (indi_test::test_exception const&)
+	catch (indi_test::exception const&)
 	{
 		// func should not be called when released
 		BOOST_TEST(call_count == 0);
