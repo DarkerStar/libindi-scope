@@ -108,3 +108,38 @@ BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 		BOOST_TEST(not called, "function called despite release");
 	}
 }
+
+/*****************************************************************************
+ * When initialization of the exit function data member fails, the exit
+ * function argument passed to the constructor should be called.
+ * 
+ * (Reference: P0052r10 7.5.2.8)
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
+{
+	auto called = false;
+	
+	class functor_t
+	{
+	public:
+		functor_t(bool& flag) : _p_flag{&flag} {}
+		functor_t(functor_t const& other) : _p_flag{other._p_flag} { throw indi_test::exception{}; }
+		functor_t(functor_t&& other) noexcept(false) : _p_flag{other._p_flag} {}
+
+		auto operator()() { *_p_flag = true; }
+
+	private:
+		bool* _p_flag = nullptr;
+	};
+
+	try
+	{
+		auto const _ = indi::scope_exit{functor_t{called}};
+		BOOST_ERROR("function object copy constructor was not used");
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(called);
+	}
+}
