@@ -43,30 +43,30 @@ struct exception {};
 
 BOOST_AUTO_TEST_CASE(basic_operation_CASE_success)
 {
-	auto called = false;
+	auto call_count = 0;
 
 	{
-		auto const _ = indi::scope_exit{[&called] { called = true; }};
-		BOOST_TEST(not called, "function called before scope exit");
+		auto const _ = indi::scope_exit{[&call_count] { ++call_count; }};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
 	}
 
-	BOOST_TEST(called);
+	BOOST_TEST(call_count == 1);
 }
 
 BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
 {
-	auto called = false;
+	auto call_count = 0;
 
 	try
 	{
-		auto const _ = indi::scope_exit{[&called] { called = true; }};
-		BOOST_TEST(not called, "function called before scope exit");
+		auto const _ = indi::scope_exit{[&call_count] { ++call_count; }};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
 
 		throw indi_test::exception{};
 	}
 	catch (indi_test::exception const&)
 	{
-		BOOST_TEST(called);
+		BOOST_TEST(call_count == 1);
 	}
 }
 
@@ -76,36 +76,36 @@ BOOST_AUTO_TEST_CASE(basic_operation_CASE_fail)
 
 BOOST_AUTO_TEST_CASE(release_operation_CASE_success)
 {
-	auto called = false;
+	auto call_count = 0;
 
 	{
-		auto scope_guard = indi::scope_exit{[&called] { called = true; }};
-		BOOST_TEST(not called, "function called before scope exit");
+		auto scope_guard = indi::scope_exit{[&call_count] { ++call_count; }};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
 
 		scope_guard.release();
-		BOOST_TEST(not called, "function called by release");
+		BOOST_TEST(call_count == 0, "function called by release");
 	}
 
-	BOOST_TEST(not called, "function called despite release");
+	BOOST_TEST(call_count == 0, "function called despite release");
 }
 
 BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 {
-	auto called = false;
+	auto call_count = 0;
 
 	try
 	{
-		auto scope_guard = indi::scope_exit{[&called] { called = true; }};
-		BOOST_TEST(not called, "function called before scope exit");
+		auto scope_guard = indi::scope_exit{[&call_count] { ++call_count; }};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
 
 		scope_guard.release();
-		BOOST_TEST(not called, "function called by release");
+		BOOST_TEST(call_count == 0, "function called by release");
 
 		throw indi_test::exception{};
 	}
 	catch (indi_test::exception const&)
 	{
-		BOOST_TEST(not called, "function called despite release");
+		BOOST_TEST(call_count == 0, "function called despite release");
 	}
 }
 
@@ -118,28 +118,30 @@ BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 
 BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
 {
-	auto called = false;
-	
+	auto call_count = 0;
+
+	// Function object with `noexcept(false)` move-construction, which should
+	// force scope_exit to do copy-construction, which will throw.
 	class functor_t
 	{
 	public:
-		functor_t(bool& flag) : _p_flag{&flag} {}
-		functor_t(functor_t const& other) : _p_flag{other._p_flag} { throw indi_test::exception{}; }
-		functor_t(functor_t&& other) noexcept(false) : _p_flag{other._p_flag} {}
+		explicit functor_t(int& counter) : _p_counter{&counter} {}
+		functor_t(functor_t const& other) : _p_counter{other._p_counter} { throw indi_test::exception{}; }
+		functor_t(functor_t&& other) noexcept(false) : _p_counter{other._p_counter} {}
 
-		auto operator()() { *_p_flag = true; }
+		auto operator()() { ++(*_p_counter); }
 
 	private:
-		bool* _p_flag = nullptr;
+		int* _p_counter = nullptr;
 	};
 
 	try
 	{
-		auto const _ = indi::scope_exit{functor_t{called}};
+		auto const _ = indi::scope_exit{functor_t{call_count}};
 		BOOST_ERROR("function object copy constructor was not used");
 	}
 	catch (indi_test::exception const&)
 	{
-		BOOST_TEST(called);
+		BOOST_TEST(call_count == 1);
 	}
 }
