@@ -65,16 +65,42 @@ constexpr auto move_init_if_noexcept(U& u) noexcept -> decltype(auto)
 	}
 }
 
-} // namespace _detail_X_scope
-
+// scope_guard_base<EF>
+//
+// Base type for scope guards, to set up some sensible defaults and avoid
+// repetition.
 template <typename EF>
-class scope_exit
+class scope_guard_base
 {
 public:
 	// 7.5.2.3 requirements.
 	static_assert((std::is_object_v<EF> and std::is_destructible_v<EF>) or std::is_lvalue_reference_v<EF>);
 	static_assert(std::is_invocable_v<std::remove_reference_t<EF>>);
 
+	// Scope guards are move constructible.
+	constexpr scope_guard_base(scope_guard_base&&) noexcept = default;
+
+	// Scope guards are destructible.
+	constexpr ~scope_guard_base() = default;
+
+	// Scope guards are non-copyable.
+	scope_guard_base(scope_guard_base const&) = delete;
+	auto operator=(scope_guard_base const&) -> scope_guard_base& = delete;
+
+	// Scope guards have no move-assignment.
+	auto operator=(scope_guard_base&&) -> scope_guard_base& = delete;
+
+protected:
+	// Only derived types (which should be scope guards) can construct.
+	constexpr scope_guard_base() noexcept = default;
+};
+
+} // namespace _detail_X_scope
+
+template <typename EF>
+class scope_exit : public _detail_X_scope::scope_guard_base<EF>
+{
+public:
 	template <typename EFP>
 	explicit scope_exit(EFP&& f)
 		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
@@ -110,13 +136,6 @@ public:
 	{
 		_execute_on_destruction = false;
 	}
-
-	// Non-copyable.
-	scope_exit(scope_exit const&) = delete;
-	auto operator=(scope_exit const&) -> scope_exit& = delete;
-
-	// No move-assignment.
-	auto operator=(scope_exit&&) -> scope_exit& = delete;
 
 private:
 	EF _exit_function;
