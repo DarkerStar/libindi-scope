@@ -186,7 +186,7 @@ using rvalue_functors = std::tuple<
 	const_functor_t<T>,
 	noexcept_functor_t<T>,
 	const_noexcept_functor_t<T>,
-	//move_only_functor_t<T>,
+	move_only_functor_t<T>,
 	copy_only_functor_t<T>,
 	move_throws_functor_t<T>
 >;
