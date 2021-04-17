@@ -38,7 +38,7 @@ jobs:
             - g++-10
       env:
         - CXX: g++-10
-        - CXXFLAGS: "-std=c++20 -pedantic -Wall -Wextra -I \"${BOOST_ROOT}\""
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I \\\"${BOOST_ROOT}\\\"\""
       if: branch IN (main, develop)
 
     - name: Clang 10 on Linux
@@ -52,7 +52,7 @@ jobs:
             - clang-10
       env:
         - CXX: clang++-10
-        - CXXFLAGS: "-std=c++20 -pedantic -Wall -Wextra -I \"${BOOST_ROOT}\""
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I \\\"${BOOST_ROOT}\\\"\""
       if: branch IN (main, develop)
 
     - name: Clang 10 on Linux with libc++
@@ -66,14 +66,14 @@ jobs:
             - clang-10
       env:
         - CXX: clang++-10
-        - CXXFLAGS: "-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I \"${BOOST_ROOT}\""
+        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I \\\"${BOOST_ROOT}\\\"\""
       if: branch IN (main, develop)
 
 env:
   global:
     - BOOST_VERSION: 1.75.0
-    - BOOST_ROOT: ${TRAVIS_BUILD_DIR}/boost_$(printf '%s' "${BOOST_VERSION}" | sed 's/\./_/g')
-    - MAKEFLAGS: '-j 3'
+    - BOOST_ROOT: "\"${TRAVIS_BUILD_DIR}/boost_$(printf '%s' \\\"${BOOST_VERSION}\\\" | sed 's/\./_/g')\""
+    - MAKEFLAGS: "'-j 3'"
 
 install:
   # Get Boost if necessary.
