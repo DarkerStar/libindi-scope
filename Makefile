@@ -140,8 +140,8 @@ $(eval $(foreach module,${modules},$(call module-testing,${module})))
 #   5.  Remove temporary files.
 $(addprefix indi/,${modules:=.test.o}) : %.o : %.cpp
 	@mkdir -p -- "${@D}" "${depsdir}/${*D}"
-	@printf '%s\n' "${CXX} ${CXXFLAGS} ${CPPFLAGS} -c -o ${@} ${<}"
-	@${CXX} ${CXXFLAGS} ${CPPFLAGS} -MMD -MP -MF "${depsdir}/${*}.d.tmp" -c -o ${@} ${<}
+	@printf '%s\n' "${CXX} ${CXXFLAGS} ${CPPFLAGS} -I. -c -o ${@} ${<}"
+	@${CXX} ${CXXFLAGS} ${CPPFLAGS} -I. -MMD -MP -MF "${depsdir}/${*}.d.tmp" -c -o ${@} ${<}
 	@{ printf '%s ' "${depsdir}/${*}.d" && cat "${depsdir}/${*}.d.tmp" ; } >"${depsdir}/${*}.d"
 	-@rm -f -- "${depsdir}/${*}.d.tmp"
 
