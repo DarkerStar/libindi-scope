@@ -94,7 +94,8 @@ public:
 	scope_exit(scope_exit&& other)
 		noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>)
 	:
-		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)}
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)},
+		_execute_on_destruction{other._execute_on_destruction}
 	{}
 
 	~scope_exit()
