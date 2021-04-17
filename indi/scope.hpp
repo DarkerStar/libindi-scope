@@ -91,7 +91,11 @@ public:
 		f();
 	}
 
-	scope_exit(scope_exit&& rhs) noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>) {}
+	scope_exit(scope_exit&& other)
+		noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)}
+	{}
 
 	~scope_exit()
 	{

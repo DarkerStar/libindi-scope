@@ -24,6 +24,7 @@
 #	include <boost/test/included/unit_test.hpp>
 #endif // BOOST_TEST_DYN_LINK
 
+#include <memory>
 #include <tuple>
 
 #include <indi/scope.hpp>
@@ -389,4 +390,94 @@ BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
 
 	BOOST_CHECK_THROW(indi::scope_exit{functor_t{call_count}}, indi_test::exception);
 	BOOST_TEST(call_count == 1);
+}
+
+/*****************************************************************************
+ * Move tests
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_lvalue,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	auto call_count = 0;
+	auto func = Func{call_count};
+
+	auto p_scope_guard_1 = std::unique_ptr<indi::scope_exit<Func&>>{new indi::scope_exit<Func&>{func}};
+	BOOST_TEST(call_count == 0); // sanity check
+
+	auto p_scope_guard_2 = std::unique_ptr<indi::scope_exit<Func&>>{new indi::scope_exit{std::move(*p_scope_guard_1)}};
+	BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+	p_scope_guard_1.reset();
+	BOOST_TEST(call_count == 0, "function called by releasing moved-from scope guard");
+
+	p_scope_guard_2.reset();
+	BOOST_TEST(call_count == 1);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_rvalue,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	auto p_scope_guard_1 = std::unique_ptr<indi::scope_exit<Func>>{new indi::scope_exit{Func{call_count}}};
+	BOOST_TEST(call_count == 0); // sanity check
+
+	auto p_scope_guard_2 = std::unique_ptr<indi::scope_exit<Func>>{new indi::scope_exit{std::move(*p_scope_guard_1)}};
+	BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+	p_scope_guard_1.reset();
+	BOOST_TEST(call_count == 0, "function called by releasing moved-from scope guard");
+
+	p_scope_guard_2.reset();
+	BOOST_TEST(call_count == 1);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_lvalue_CASE_released,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	auto call_count = 0;
+	auto func = Func{call_count};
+
+	auto p_scope_guard_1 = std::unique_ptr<indi::scope_exit<Func&>>{new indi::scope_exit<Func&>{func}};
+	BOOST_TEST(call_count == 0); // sanity check
+
+	p_scope_guard_1->release();
+
+	auto p_scope_guard_2 = std::unique_ptr<indi::scope_exit<Func&>>{new indi::scope_exit{std::move(*p_scope_guard_1)}};
+	BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+	p_scope_guard_1.reset();
+	BOOST_TEST(call_count == 0, "function called by releasing moved-from scope guard");
+
+	p_scope_guard_2.reset();
+	BOOST_TEST(call_count == 0, "function called despite release");
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_rvalue_CASE_released,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	auto p_scope_guard_1 = std::unique_ptr<indi::scope_exit<Func>>{new indi::scope_exit{Func{call_count}}};
+	BOOST_TEST(call_count == 0); // sanity check
+
+	p_scope_guard_1->release();
+
+	auto p_scope_guard_2 = std::unique_ptr<indi::scope_exit<Func>>{new indi::scope_exit{std::move(*p_scope_guard_1)}};
+	BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+	p_scope_guard_1.reset();
+	BOOST_TEST(call_count == 0, "function called by releasing moved-from scope guard");
+
+	p_scope_guard_2.reset();
+	BOOST_TEST(call_count == 0, "function called despite release");
 }
