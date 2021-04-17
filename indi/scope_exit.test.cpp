@@ -370,8 +370,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 
 BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
 {
-	auto call_count = 0;
-
 	// Function object with `noexcept(false)` move-construction, which should
 	// force scope_exit to do copy-construction, which will throw.
 	class functor_t
@@ -387,13 +385,8 @@ BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
 		int* _p_counter = nullptr;
 	};
 
-	try
-	{
-		auto const _ = indi::scope_exit{functor_t{call_count}};
-		BOOST_ERROR("function object copy constructor was not used");
-	}
-	catch (indi_test::exception const&)
-	{
-		BOOST_TEST(call_count == 1);
-	}
+	auto call_count = 0;
+
+	BOOST_CHECK_THROW(indi::scope_exit{functor_t{call_count}}, indi_test::exception);
+	BOOST_TEST(call_count == 1);
 }
