@@ -75,6 +75,13 @@ env:
     - BOOST_ROOT: "\"${TRAVIS_BUILD_DIR}/boost_$(printf '%s' \\\"${BOOST_VERSION}\\\" | sed 's/\\./_/g')\""
     - MAKEFLAGS: "'-j 3'"
 
+before_install:
+  - echo "'${BOOST_VERSION}'"
+  - echo "'${BOOST_ROOT}'"
+  - echo "'${MAKEFLAGS}'"
+  - echo "'${CXX}'"
+  - echo "'${CXXFLAGS}'"
+
 install:
   # Get Boost if necessary.
   - |
@@ -83,10 +90,12 @@ install:
       # Setup environment
       BOOST_TAR="boost_$(printf '%s' "${BOOST_VERSION}" | sed 's/\./_/g').tar.gz"
       BOOST_URL="https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_TAR}"
+      echo "'${BOOST_TAR}'"
+      echo "'${BOOST_URL}'"
       # Download
       travis_retry wget --quiet "${BOOST_URL}" || exit 1
       # Expand
-      tar -xz "${BOOST_TAR}" || exit 1
+      tar -xf "${BOOST_TAR}" || exit 1
       # Clean up
       rm -f -- "${BOOST_TAR}"
       unset BOOST_URL
