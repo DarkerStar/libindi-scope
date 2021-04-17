@@ -72,7 +72,7 @@ jobs:
 env:
   global:
     - BOOST_VERSION: 1.75.0
-    - BOOST_ROOT: "\"${TRAVIS_BUILD_DIR}/boost_$(printf '%s' \\\"${BOOST_VERSION}\\\" | sed 's/\./_/g')\""
+    - BOOST_ROOT: "\"${TRAVIS_BUILD_DIR}/boost_$(printf '%s' \"${BOOST_VERSION}\" | sed 's/\\./_/g')\""
     - MAKEFLAGS: "'-j 3'"
 
 install:
