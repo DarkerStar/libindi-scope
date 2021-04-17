@@ -317,6 +317,43 @@ BOOST_AUTO_TEST_CASE(release_operation_CASE_success)
 	BOOST_TEST(call_count == 0, "function called despite release");
 }
 
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	release_operation_WITH_lvalue_CASE_success,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	{
+		auto func = Func{call_count};
+		auto scope_guard = indi::scope_exit<Func&>{func};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+
+		scope_guard.release();
+		BOOST_TEST(call_count == 0, "function called by release");
+	}
+
+	BOOST_TEST(call_count == 0, "function called despite release");
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	release_operation_WITH_rvalue_CASE_success,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	{
+		auto scope_guard = indi::scope_exit{Func{call_count}};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+
+		scope_guard.release();
+		BOOST_TEST(call_count == 0, "function called by release");
+	}
+
+	BOOST_TEST(call_count == 0, "function called despite release");
+}
+
 BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 {
 	auto call_count = 0;
@@ -324,6 +361,53 @@ BOOST_AUTO_TEST_CASE(release_operation_CASE_fail)
 	try
 	{
 		auto scope_guard = indi::scope_exit{[&call_count] { ++call_count; }};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+
+		scope_guard.release();
+		BOOST_TEST(call_count == 0, "function called by release");
+
+		throw indi_test::exception{};
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(call_count == 0, "function called despite release");
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	release_operation_WITH_lvalue_CASE_fail,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	try
+	{
+		auto func = Func{call_count};
+		auto scope_guard = indi::scope_exit<Func&>{func};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+
+		scope_guard.release();
+		BOOST_TEST(call_count == 0, "function called by release");
+
+		throw indi_test::exception{};
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(call_count == 0, "function called despite release");
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	release_operation_WITH_rvalue_CASE_fail,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	try
+	{
+		auto scope_guard = indi::scope_exit{Func{call_count}};
 		BOOST_TEST(call_count == 0, "function called before scope exit");
 
 		scope_guard.release();
