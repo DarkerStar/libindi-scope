@@ -137,6 +137,128 @@ BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
 }
 
 /*****************************************************************************
+ * Move tests
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_lvalue_CASE_success,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	auto call_count = 0;
+	auto func = Func{call_count};
+
+	auto p_scope_guard_1 = std::unique_ptr<indi::scope_fail<Func&>>{new indi::scope_fail<Func&>{func}};
+	BOOST_TEST(call_count == 0); // sanity check
+
+	auto p_scope_guard_2 = std::unique_ptr<indi::scope_fail<Func&>>{new indi::scope_fail{std::move(*p_scope_guard_1)}};
+	BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+	p_scope_guard_1.reset();
+	BOOST_TEST(call_count == 0, "function called by releasing moved-from scope guard");
+
+	p_scope_guard_2.reset();
+	BOOST_TEST(call_count == 0);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_rvalue_CASE_success,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	auto p_scope_guard_1 = std::unique_ptr<indi::scope_fail<Func>>{new indi::scope_fail{Func{call_count}}};
+	BOOST_TEST(call_count == 0); // sanity check
+
+	auto p_scope_guard_2 = std::unique_ptr<indi::scope_fail<Func>>{new indi::scope_fail{std::move(*p_scope_guard_1)}};
+	BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+	p_scope_guard_1.reset();
+	BOOST_TEST(call_count == 0, "function called by releasing moved-from scope guard");
+
+	p_scope_guard_2.reset();
+	BOOST_TEST(call_count == 0);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_lvalue_CASE_fail,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	using scope_fail_ptr = std::unique_ptr<indi::scope_fail<Func&>>;
+
+	auto call_count = 0;
+	auto func = Func{call_count};
+
+	try
+	{
+		// Outer scope guard, destroyed last.
+		auto p_scope_guard_outer = scope_fail_ptr{};
+
+		try
+		{
+			// Inner scope guard, destroyed first (after being moved from).
+			auto p_scope_guard_inner = scope_fail_ptr{new indi::scope_fail<Func&>{func}};
+			BOOST_TEST(call_count == 0); // sanity check
+
+			p_scope_guard_outer.reset(new indi::scope_fail{std::move(*p_scope_guard_inner)});
+			BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+			throw indi_test::exception{};
+		}
+		catch (indi_test::exception const&)
+		{
+			BOOST_TEST(call_count == 0, "function called by moved-from scope guard");
+
+			throw;
+		}
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(call_count == 1);
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	moving_WITH_rvalue_CASE_fail,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	using scope_fail_ptr = std::unique_ptr<indi::scope_fail<Func>>;
+
+	auto call_count = 0;
+
+	try
+	{
+		// Outer scope guard, destroyed last.
+		auto p_scope_guard_outer = scope_fail_ptr{};
+
+		try
+		{
+			// Inner scope guard, destroyed first (after being moved from).
+			auto p_scope_guard_inner = scope_fail_ptr{new indi::scope_fail{Func{call_count}}};
+			BOOST_TEST(call_count == 0); // sanity check
+
+			p_scope_guard_outer.reset(new indi::scope_fail{std::move(*p_scope_guard_inner)});
+			BOOST_TEST(call_count == 0, "function called by moving scope guard");
+
+			throw indi_test::exception{};
+		}
+		catch (indi_test::exception const&)
+		{
+			BOOST_TEST(call_count == 0, "function called by moved-from scope guard");
+
+			throw;
+		}
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(call_count == 1);
+	}
+}
+
+/*****************************************************************************
  * Special operations
  ****************************************************************************/
 

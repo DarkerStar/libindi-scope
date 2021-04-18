@@ -251,6 +251,11 @@ public:
 		f();
 	}
 
+	scope_fail(scope_fail&& other)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)}
+	{}
+
 	~scope_fail()
 	{
 		if (std::uncaught_exceptions() > _uncaught_on_creation)
