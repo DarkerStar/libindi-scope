@@ -65,6 +65,7 @@ jobs:
           packages:
             - clang-10
             - libc++-10-dev
+            - libc++abi-10-dev
       env:
         - CXX: clang++-10
         - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
