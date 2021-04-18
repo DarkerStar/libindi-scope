@@ -255,7 +255,9 @@ public:
 	scope_success(scope_success&& other)
 	:
 		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)}
-	{}
+	{
+		other.release();
+	}
 
 	~scope_success()
 		noexcept(noexcept(_exit_function()))
