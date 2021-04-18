@@ -133,3 +133,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(not_move_assignable, Func, indi_test::all_functors
 	BOOST_TEST(not std::is_move_assignable_v<indi::scope_success<Func>>);
 	BOOST_TEST(not std::is_move_assignable_v<indi::scope_success<Func&>>);
 }
+
+// scope_success destructor is noexcept only if the wrapped function is noexcept.
+BOOST_AUTO_TEST_CASE_TEMPLATE(destructor_noexcept_CASE_noexcept_functor, Func, indi_test::nonthrowing_functors<int>)
+{
+	BOOST_TEST(std::is_nothrow_destructible_v<indi::scope_success<Func>>);
+	BOOST_TEST(std::is_nothrow_destructible_v<indi::scope_success<Func&>>);
+}
+
+// scope_success destructor is noexcept only if the wrapped function is noexcept.
+BOOST_AUTO_TEST_CASE_TEMPLATE(destructor_noexcept_CASE_throwing_functor, Func, indi_test::throwing_functors<int>)
+{
+	BOOST_TEST(not std::is_nothrow_destructible_v<indi::scope_success<Func>>);
+	BOOST_TEST(not std::is_nothrow_destructible_v<indi::scope_success<Func&>>);
+}
