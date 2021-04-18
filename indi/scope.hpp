@@ -265,7 +265,12 @@ public:
 	}
 
 	auto release() noexcept -> void
-	{}
+	{
+		// The number of uncaught exceptions can never be less than zero,
+		// so by setting the count to -1, the destructor condition can never
+		// be met.
+		_uncaught_on_creation = -1;
+	}
 
 private:
 	EF _exit_function;
