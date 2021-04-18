@@ -20,6 +20,8 @@
 #ifndef INDI_TEST_INC_scope
 #define INDI_TEST_INC_scope
 
+#include <tuple>
+
 namespace indi_test {
 
 /*****************************************************************************
