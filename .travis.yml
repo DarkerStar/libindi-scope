@@ -100,6 +100,7 @@ install:
       rm -f -- "${BOOST_TAR}"
       unset BOOST_URL
       unset BOOST_TAR
+    else
       cd -- "${TRAVIS_BUILD_DIR}"
     fi
 
