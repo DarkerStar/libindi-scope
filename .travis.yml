@@ -25,7 +25,6 @@ language: cpp
 cache:
   ccache : true
   directories:
-    - ${HOME}/boost_1_75_0
     - ${HOME}/boost_1_76_0
 
 jobs:
@@ -42,20 +41,6 @@ jobs:
         - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
       if: branch IN (main, develop)
 
-    - name: Clang 10 on Linux
-      addons:
-        apt:
-          update: true
-          sources:
-            - sourceline: 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main'
-              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-          packages:
-            - clang-10
-      env:
-        - CXX: clang++-10
-        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
-      if: branch IN (main, develop)
-
     - name: Clang 11 on Linux
       addons:
         apt:
@@ -68,22 +53,6 @@ jobs:
       env:
         - CXX: clang++-11
         - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
-      if: branch IN (main, develop)
-
-    - name: Clang 10 on Linux with libc++
-      addons:
-        apt:
-          update: true
-          sources:
-            - sourceline: 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-10 main'
-              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
-          packages:
-            - clang-10
-            - libc++-10-dev
-            - libc++abi-10-dev
-      env:
-        - CXX: clang++-10
-        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
       if: branch IN (main, develop)
 
     - name: Clang 11 on Linux with libc++
@@ -115,21 +84,15 @@ install:
   - |
     if [ ! -d ${BOOST_SLUG}/boost ]
     then
-      # Setup environment
-      BOOST_TAR="${BOOST_SLUG}.tar.gz"
-      BOOST_URL="https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_TAR}"
       # Download
-      travis_retry wget --quiet "${BOOST_URL}" || exit 1
+      travis_retry wget --quiet https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_SLUG}.tar.gz || exit 1
       # Expand
-      tar -xf "${BOOST_TAR}" || exit 1
+      tar -xf ${BOOST_SLUG}.tar.gz || exit 1
       # Clean up
-      rm -f -- "${BOOST_TAR}"
-      unset BOOST_URL
-      unset BOOST_TAR
+      rm -f -- ${BOOST_SLUG}.tar.gz
     fi
   # Restore build environment
   - cd -- "${TRAVIS_BUILD_DIR}"
 
 script:
-  - pwd
   - make test
