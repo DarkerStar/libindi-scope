@@ -26,6 +26,8 @@
 
 #include <indi/scope.hpp>
 
+#include <indi/scope.test.hpp>
+
 BOOST_AUTO_TEST_CASE(dummy)
 {
 	// Do nothing.
