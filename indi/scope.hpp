@@ -254,7 +254,8 @@ public:
 
 	scope_success(scope_success&& other)
 	:
-		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)}
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)},
+		_uncaught_on_creation{other._uncaught_on_creation}
 	{
 		other.release();
 	}
