@@ -237,7 +237,7 @@ template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
 template <typename EF>
-class scope_success
+class scope_success : public _detail_X_scope::scope_guard_base<EF>
 {
 public:
 	template <typename EFP>
