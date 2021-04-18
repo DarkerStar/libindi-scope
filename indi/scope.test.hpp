@@ -183,6 +183,19 @@ using rvalue_functors = std::tuple<
 	move_throws_functor_t<T>
 >;
 
+// List of all test functors.
+template <typename T>
+using all_functors = std::tuple<
+	functor_t<T>,
+	const_functor_t<T>,
+	noexcept_functor_t<T>,
+	const_noexcept_functor_t<T>,
+	move_only_functor_t<T>,
+	copy_only_functor_t<T>,
+	move_throws_functor_t<T>,
+	immobile_functor_t<T>
+>;
+
 } // namespace indi_test
 
 #endif // include guard
