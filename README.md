@@ -71,7 +71,7 @@ The only difference between the three scope guards are the conditions when the f
 
 Example:
 
-```lang-c++
+```c++
 auto f()
 {
     auto const s1 = scope_exit   {[] { std::cout << "exit!"; }};
