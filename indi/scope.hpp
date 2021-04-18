@@ -20,6 +20,89 @@
 #ifndef INDI_INC_scope
 #define INDI_INC_scope
 
+/*****************************************************************************
+ * Scope guards
+ *
+ * Scope guards are objects that wrap a function, and call that function when
+ * the scope guard goes out of scope, depending on certain conditions.
+ *
+ * The three primary types of scope guards are:
+ *  *   scope_exit :    calls the function whenever the guard goes out of
+ *                      scope, regardless of why.
+ *  *   scope_success : calls the function only if the guard goes out of scope
+ *                      normally (not via stack unwinding).
+ *  *   scope_fail :    calls the function only if the guard goes out of scope
+ *                      via stack unwinding.
+ *
+ * All scope guards also have a `release()` function, that prevents the
+ * wrapped function from being called when the guard goes out of scope.
+ *
+ * Scope guards cannot be copied, and can only be move constructed (not move
+ * assigned). They cannot be default constructed, and can only be constructed
+ * with a function object or lambda, or a lvalue reference to a function
+ * object or lambda, or a lvalue reference to a function.
+ *
+ * Usage:
+ *      auto f()
+ *      {
+ *          auto const s1 = scope_exit   {[] { std::cout << "exit!"; }};
+ *          auto const s2 = scope_success{[] { std::cout << "good!"; }};
+ *          auto const s3 = scope_fail   {[] { std::cout << "fail!"; }};
+ *
+ *          // [...]
+ *
+ *          // "fail!" will be printed ONLY if an exception was thrown above.
+ *          // "good!" will be printed ONLY if an exception was *NOT* thrown.
+ *          // "exit!" will be printed, no matter what happened above.
+ *      }
+ *
+ * Basic interface:
+ *      template <typename EF>
+ *      class ScopeGuard
+ *      {
+ *      public:
+ *          template <typename EFP>
+ *          explicit ScopeGuard(EFP&&) noexcept(*1);
+ *
+ *          ScopeGuard(ScopeGuard&&) noexcept(*2);
+ *
+ *          auto release() noexcept -> void;
+ *
+ *          // No copy construction.
+ *          ScopeGuard(ScopeGuard const&) = delete;
+ *
+ *          // No assignment (no copy assignment OR move assignment).
+ *          auto operator=(ScopeGuard const&) -> ScopeGuard& = delete;
+ *          auto operator=(ScopeGuard&&)      -> ScopeGuard& = delete;
+ *      };
+ *
+ *      template <typename EF>
+ *      ScopeGuard(EF) -> ScopeGuard<EF>;
+ *
+ * Requirements:
+ *      *   (std::is_object_v<EF> and std::is_destructible_v<EF>)
+ *              or std::is_lvalue_reference_v<EF>
+ *      *   std::is_invocable_v<std::remove_reference_t<EF>>
+ *      *   If `g` is an instance of `remove_reference_t<EF>`, `g()` should be
+ *          well-formed.
+ *
+ * Notes:
+ *      *1  :   std::is_nothrow_constructible_v<EF, EFP>
+ *                  or std::is_nothrow_constructible_v<EF, EFP&>
+ *      *2  :   std::is_nothrow_move_constructible_v<EF>
+ *                  or std::is_nothrow_copy_constructible_v<EF>
+ *
+ * Specific scope guards may have additional or slightly modified
+ * requirements.
+ *
+ * This header is based on the proposed extension to the C++ standard library
+ * P0052.
+ *
+ * This header is currently is based on revision 10 of P0052, found at:
+ *     http://www.open-std.org/jtc1/sc22/wg21/docs/papers/2019/p0052r10.pdf
+ *
+ ****************************************************************************/
+
 #include <type_traits>
 #include <utility>
 
@@ -41,7 +124,6 @@ namespace _detail_X_scope {
 // reference AND the construction will not throw. Otherwise, it will construct
 // `_t` with an lvalue. (In other words, it will only move-construct `_t` if
 // that will not throw, otherwise it will copy-construct `_t`.)
-
 template <typename T, typename U>
 constexpr auto move_init_if_noexcept(U& u) noexcept -> decltype(auto)
 {
@@ -65,16 +147,51 @@ constexpr auto move_init_if_noexcept(U& u) noexcept -> decltype(auto)
 	}
 }
 
-} // namespace _detail_X_scope
-
+// scope_guard_base<EF>
+//
+// Base type for scope guards, to set up some sensible defaults and avoid
+// repetition.
 template <typename EF>
-class scope_exit
+class scope_guard_base
 {
 public:
 	// 7.5.2.3 requirements.
 	static_assert((std::is_object_v<EF> and std::is_destructible_v<EF>) or std::is_lvalue_reference_v<EF>);
 	static_assert(std::is_invocable_v<std::remove_reference_t<EF>>);
 
+	// Scope guards are move constructible.
+	constexpr scope_guard_base(scope_guard_base&&) noexcept = default;
+
+	// Scope guards are destructible.
+	constexpr ~scope_guard_base() = default;
+
+	// Scope guards are non-copyable.
+	scope_guard_base(scope_guard_base const&) = delete;
+	auto operator=(scope_guard_base const&) -> scope_guard_base& = delete;
+
+	// Scope guards have no move-assignment.
+	auto operator=(scope_guard_base&&) -> scope_guard_base& = delete;
+
+protected:
+	// Only derived types (which should be scope guards) can construct.
+	constexpr scope_guard_base() noexcept = default;
+};
+
+} // namespace _detail_X_scope
+
+// scope_exit<EF>
+//
+// scope_exit is a scope guard that calls its contained function whenever the
+// scope exits, whether that exit is a successful (normal) exit or a failure
+// (via stack unwinding) exit.
+//
+// Extra requirements (in addition to basic scope guard requirements):
+//      *   If `g` is an instance of `remove_reference_t<EF>`, `g()` should
+//          not raise an exception.
+template <typename EF>
+class scope_exit : public _detail_X_scope::scope_guard_base<EF>
+{
+public:
 	template <typename EFP>
 	explicit scope_exit(EFP&& f)
 		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
@@ -111,13 +228,6 @@ public:
 		_execute_on_destruction = false;
 	}
 
-	// Non-copyable.
-	scope_exit(scope_exit const&) = delete;
-	auto operator=(scope_exit const&) -> scope_exit& = delete;
-
-	// No move-assignment.
-	auto operator=(scope_exit&&) -> scope_exit& = delete;
-
 private:
 	EF _exit_function;
 	bool _execute_on_destruction = true;
@@ -125,6 +235,59 @@ private:
 
 template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
+
+// scope_success<EF>
+//
+// scope_success is a scope guard that calls its contained function only in
+// the case that it is destroyed under normal conditions (not stack
+// unwinding).
+template <typename EF>
+class scope_success : public _detail_X_scope::scope_guard_base<EF>
+{
+public:
+	template <typename EFP>
+	explicit scope_success(EFP&& f)
+		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)},
+		_uncaught_on_creation{std::uncaught_exceptions()}
+	{
+		// 7.5.2.15 requirements.
+		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_success>);
+		static_assert(std::is_nothrow_constructible_v<EF, EFP> or std::is_constructible_v<EF, EFP&>);
+	}
+
+	scope_success(scope_success&& other)
+		noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)},
+		_uncaught_on_creation{other._uncaught_on_creation}
+	{
+		other.release();
+	}
+
+	~scope_success()
+		noexcept(noexcept(_exit_function()))
+	{
+		if (std::uncaught_exceptions() <= _uncaught_on_creation)
+			_exit_function();
+	}
+
+	auto release() noexcept -> void
+	{
+		// The number of uncaught exceptions can never be less than zero,
+		// so by setting the count to -1, the destructor condition can never
+		// be met.
+		_uncaught_on_creation = -1;
+	}
+
+private:
+	EF _exit_function;
+	int _uncaught_on_creation = 0;
+};
+
+template <typename EF>
+scope_success(EF) -> scope_success<EF>;
 
 } // inline namespace v1
 } // namespace indi

@@ -1,0 +1,98 @@
+##############################################################################
+#
+# This file is part of libindi-scope.
+#
+# libindi-scope is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# libindi-scope is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with libindi-scope.  If not, see <https://www.gnu.org/licenses/>.
+#
+##############################################################################
+
+os: linux
+dist: focal
+
+language: cpp
+
+cache:
+  ccache : true
+  directories:
+    - ${HOME}/boost_1_76_0
+
+jobs:
+  include:
+
+    - name: GCC 10 on Linux
+      addons:
+        apt:
+          update: true
+          packages:
+            - g++-10
+      env:
+        - CXX: g++-10
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
+      if: branch IN (main, develop)
+
+    - name: Clang 11 on Linux
+      addons:
+        apt:
+          update: true
+          sources:
+            - sourceline: 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - clang-11
+      env:
+        - CXX: clang++-11
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
+      if: branch IN (main, develop)
+
+    - name: Clang 11 on Linux with libc++
+      addons:
+        apt:
+          update: true
+          sources:
+            - sourceline: 'deb http://apt.llvm.org/focal/ llvm-toolchain-focal-11 main'
+              key_url: 'https://apt.llvm.org/llvm-snapshot.gpg.key'
+          packages:
+            - clang-11
+            - libc++-11-dev
+            - libc++abi-11-dev
+      env:
+        - CXX: clang++-11
+        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
+      if: branch IN (main, develop)
+
+env:
+  global:
+    - BOOST_VERSION: 1.76.0
+    - BOOST_SLUG: "\"boost_$(printf '%s' ${BOOST_VERSION} | sed 's/\\./_/g')\""
+    - MAKEFLAGS: "'-j 3'"
+
+install:
+  # Switch to home directory to install stuff
+  - cd -- ${HOME}
+  # Get Boost if necessary.
+  - |
+    if [ ! -d ${BOOST_SLUG}/boost ]
+    then
+      # Download
+      travis_retry wget --quiet https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_SLUG}.tar.gz || exit 1
+      # Expand
+      tar -xf ${BOOST_SLUG}.tar.gz || exit 1
+      # Clean up
+      rm -f -- ${BOOST_SLUG}.tar.gz
+    fi
+  # Restore build environment
+  - cd -- "${TRAVIS_BUILD_DIR}"
+
+script:
+  - make test
