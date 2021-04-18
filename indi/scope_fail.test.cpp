@@ -26,7 +26,82 @@
 
 #include <indi/scope.hpp>
 
-BOOST_AUTO_TEST_CASE(dummy)
+#include <indi/scope.test.hpp>
+
+/*****************************************************************************
+ * Basic operation tests
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	basic_operation_WITH_lvalue_CASE_success,
+	Func,
+	indi_test::lvalue_functors<int>)
 {
-	// Do nothing.
+	auto call_count = 0;
+
+	// Artificial scope
+	{
+		auto func = Func{call_count};
+		auto const _ = indi::scope_fail<Func&>{func};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+	}
+
+	BOOST_TEST(call_count == 0);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	basic_operation_WITH_rvalue_CASE_success,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	// Artificial scope
+	{
+		auto const _ = indi::scope_fail{Func{call_count}};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+	}
+
+	BOOST_TEST(call_count == 0);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	basic_operation_WITH_lvalue_CASE_fail,
+	Func,
+	indi_test::lvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	try
+	{
+		auto func = Func{call_count};
+		auto const _ = indi::scope_fail<Func&>{func};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+
+		throw indi_test::exception{};
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(call_count == 1);
+	}
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(
+	basic_operation_WITH_rvalue_CASE_fail,
+	Func,
+	indi_test::rvalue_functors<int>)
+{
+	auto call_count = 0;
+
+	try
+	{
+		auto const _ = indi::scope_fail{Func{call_count}};
+		BOOST_TEST(call_count == 0, "function called before scope exit");
+
+		throw indi_test::exception{};
+	}
+	catch (indi_test::exception const&)
+	{
+		BOOST_TEST(call_count == 1);
+	}
 }

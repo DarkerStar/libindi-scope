@@ -236,6 +236,17 @@ private:
 template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
+template <typename EF>
+class scope_fail
+{
+public:
+	template <typename EFP>
+	explicit scope_fail(EFP&&) {}
+};
+
+template <typename EF>
+scope_fail(EF) -> scope_fail<EF>;
+
 // scope_success<EF>
 //
 // scope_success is a scope guard that calls its contained function only in
