@@ -238,21 +238,27 @@ template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
 template <typename EF>
-class scope_fail
+class scope_fail : public _detail_X_scope::scope_guard_base<EF>
 {
 public:
 	template <typename EFP>
 	explicit scope_fail(EFP&& f)
+		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
 	try :
 		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)},
 		_uncaught_on_creation{std::uncaught_exceptions()}
-	{}
+	{
+		// 7.5.2.10 requirements.
+		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_fail>);
+		static_assert(std::is_nothrow_constructible_v<EF, EFP> or std::is_constructible_v<EF, EFP&>);
+	}
 	catch (...)
 	{
 		f();
 	}
 
 	scope_fail(scope_fail&& other)
+		noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>)
 	:
 		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)},
 		_uncaught_on_creation{other._uncaught_on_creation}
