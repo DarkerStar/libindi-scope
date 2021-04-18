@@ -253,6 +253,7 @@ public:
 	}
 
 	scope_success(scope_success&& other)
+		noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>)
 	:
 		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)},
 		_uncaught_on_creation{other._uncaught_on_creation}
