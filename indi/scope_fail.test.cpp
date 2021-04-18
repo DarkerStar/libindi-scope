@@ -107,6 +107,36 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 }
 
 /*****************************************************************************
+ * When initialization of the exit function data member fails, the exit
+ * function argument passed to the constructor should be called.
+ * 
+ * (Reference: P0052r10 7.5.2.8)
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE(exit_function_called_on_init_failure)
+{
+	// Function object with `noexcept(false)` move-construction, which should
+	// force scope_fail to do copy-construction, which will throw.
+	class functor_t
+	{
+	public:
+		explicit functor_t(int& counter) : _p_counter{&counter} {}
+		functor_t(functor_t const& other) : _p_counter{other._p_counter} { throw indi_test::exception{}; }
+		functor_t(functor_t&& other) noexcept(false) : _p_counter{other._p_counter} {}
+
+		auto operator()() { ++(*_p_counter); }
+
+	private:
+		int* _p_counter = nullptr;
+	};
+
+	auto call_count = 0;
+
+	BOOST_CHECK_THROW(indi::scope_fail{functor_t{call_count}}, indi_test::exception);
+	BOOST_TEST(call_count == 1);
+}
+
+/*****************************************************************************
  * Special operations
  ****************************************************************************/
 
