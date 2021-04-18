@@ -25,7 +25,6 @@ language: cpp
 cache:
   ccache : true
   directories:
-    - ${HOME}/boost_1_75_0
     - ${HOME}/boost_1_76_0
 
 jobs:
