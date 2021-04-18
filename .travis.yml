@@ -52,7 +52,7 @@ jobs:
             - clang-10
       env:
         - CXX: clang++-10
-        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I \\\"${BOOST_ROOT}\\\"\""
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${BOOST_ROOT}\""
       if: branch IN (main, develop)
 
     - name: Clang 10 on Linux with libc++
@@ -66,7 +66,7 @@ jobs:
             - clang-10
       env:
         - CXX: clang++-10
-        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I \\\"${BOOST_ROOT}\\\"\""
+        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I ${BOOST_ROOT}\""
       if: branch IN (main, develop)
 
 env:
@@ -85,7 +85,7 @@ before_install:
 install:
   # Get Boost if necessary.
   - |
-    if ! cd -- "${BOOST_ROOT}"
+    if ! cd -- "${BOOST_ROOT}" 2>/dev/null
     then
       # Setup environment
       BOOST_TAR="boost_$(printf '%s' "${BOOST_VERSION}" | sed 's/\./_/g').tar.gz"
@@ -100,6 +100,7 @@ install:
       rm -f -- "${BOOST_TAR}"
       unset BOOST_URL
       unset BOOST_TAR
+      cd -- "${TRAVIS_BUILD_DIR}"
     fi
 
 script:
