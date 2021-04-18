@@ -236,6 +236,59 @@ private:
 template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
+// scope_success<EF>
+//
+// scope_success is a scope guard that calls its contained function only in
+// the case that it is destroyed under normal conditions (not stack
+// unwinding).
+template <typename EF>
+class scope_success : public _detail_X_scope::scope_guard_base<EF>
+{
+public:
+	template <typename EFP>
+	explicit scope_success(EFP&& f)
+		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)},
+		_uncaught_on_creation{std::uncaught_exceptions()}
+	{
+		// 7.5.2.15 requirements.
+		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_success>);
+		static_assert(std::is_nothrow_constructible_v<EF, EFP> or std::is_constructible_v<EF, EFP&>);
+	}
+
+	scope_success(scope_success&& other)
+		noexcept(std::is_nothrow_move_constructible_v<EF> or std::is_nothrow_copy_constructible_v<EF>)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)},
+		_uncaught_on_creation{other._uncaught_on_creation}
+	{
+		other.release();
+	}
+
+	~scope_success()
+		noexcept(noexcept(_exit_function()))
+	{
+		if (std::uncaught_exceptions() <= _uncaught_on_creation)
+			_exit_function();
+	}
+
+	auto release() noexcept -> void
+	{
+		// The number of uncaught exceptions can never be less than zero,
+		// so by setting the count to -1, the destructor condition can never
+		// be met.
+		_uncaught_on_creation = -1;
+	}
+
+private:
+	EF _exit_function;
+	int _uncaught_on_creation = 0;
+};
+
+template <typename EF>
+scope_success(EF) -> scope_success<EF>;
+
 } // inline namespace v1
 } // namespace indi
 
