@@ -242,10 +242,15 @@ class scope_success : public _detail_X_scope::scope_guard_base<EF>
 public:
 	template <typename EFP>
 	explicit scope_success(EFP&& f)
+		noexcept(std::is_nothrow_constructible_v<EF, EFP> or std::is_nothrow_constructible_v<EF, EFP&>)
 	:
 		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)},
 		_uncaught_on_creation{std::uncaught_exceptions()}
-	{}
+	{
+		// 7.5.2.15 requirements.
+		static_assert(not std::is_same_v<std::remove_cvref_t<EFP>, scope_success>);
+		static_assert(std::is_nothrow_constructible_v<EF, EFP> or std::is_constructible_v<EF, EFP&>);
+	}
 
 	~scope_success()
 		noexcept(noexcept(_exit_function()))
