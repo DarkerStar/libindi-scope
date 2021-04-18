@@ -42,7 +42,8 @@ An implementation of the proposed (P0052) C++ `<scope>` header
 C++ standards proposal P0052 describes a new standard library header `<scope>` that includes scope guards.
 Scope guards provide ad-hoc RAII functionality, which is particularly useful when using C library facilities in modern C++ code.
 
-This project is all about the single header `scope.hpp`, which aims to be a drop-in replacement for `<scope>` (except that everything is in the `indi` namespace, rather than `std`).
+This project is all about the single header [`scope.hpp`](https://github.com/DarkerStar/libindi-scope/blob/main/indi/scope.hpp),
+which aims to be a drop-in replacement for `<scope>` (except that everything is in the `indi` namespace, rather than `std`).
 The goal is that you can take the `scope.hpp` header and drop it into any project to be able to use P0052’s scope guards.
 (And if and when `<scope>` is standardized, you can simply replace the include directive and namespace, and everything should work exactly the same.)
 
