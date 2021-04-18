@@ -103,6 +103,7 @@
  *
  ****************************************************************************/
 
+#include <limits>
 #include <type_traits>
 #include <utility>
 
@@ -263,7 +264,12 @@ public:
 	}
 
 	auto release() noexcept -> void
-	{}
+	{
+		// The number of uncaught exceptions can never be greater than the
+		// max value of int, so by setting the count to this, the destructor
+		// condition can never be met.
+		_uncaught_on_creation = std::numeric_limits<int>::max();
+	}
 
 private:
 	EF _exit_function;
