@@ -252,6 +252,11 @@ public:
 		static_assert(std::is_nothrow_constructible_v<EF, EFP> or std::is_constructible_v<EF, EFP&>);
 	}
 
+	scope_success(scope_success&& other)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EF&&>(other._exit_function)}
+	{}
+
 	~scope_success()
 		noexcept(noexcept(_exit_function()))
 	{
