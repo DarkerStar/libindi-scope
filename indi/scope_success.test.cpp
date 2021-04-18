@@ -112,12 +112,18 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(not_default_constructible, Func, indi_test::all_functors<int>)
 {
-	BOOST_TEST(not std::is_default_constructible_v<indi::scope_exit<Func>>);
-	BOOST_TEST(not std::is_default_constructible_v<indi::scope_exit<Func&>>);
+	BOOST_TEST(not std::is_default_constructible_v<indi::scope_success<Func>>);
+	BOOST_TEST(not std::is_default_constructible_v<indi::scope_success<Func&>>);
 }
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_constructible, Func, indi_test::all_functors<int>)
 {
-	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_exit<Func>>);
-	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_exit<Func&>>);
+	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_success<Func>>);
+	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_success<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_assignable, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_success<Func>>);
+	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_success<Func&>>);
 }
