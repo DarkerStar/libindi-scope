@@ -42,6 +42,47 @@ An implementation of the proposed (P0052) C++ `<scope>` header
 C++ standards proposal P0052 describes a new standard library header `<scope>` that includes scope guards.
 Scope guards provide ad-hoc RAII functionality, which is particularly useful when using C library facilities in modern C++ code.
 
-This project is all about the single header `<indi/scope.hpp>`, which aims to be a drop-in replacement for `<scope>` (except that everything is in the `indi` namespace, rather than `std`).
-The goal is that you can take the `<indi/scope.hpp>` header and drop it into any project to be able to use P0052’s scope guards.
-(And if and when `<scope>` is standardized, you can simply replace the header and namespace, and everything should work exactly the same.)
+This project is all about the single header `scope.hpp`, which aims to be a drop-in replacement for `<scope>` (except that everything is in the `indi` namespace, rather than `std`).
+The goal is that you can take the `scope.hpp` header and drop it into any project to be able to use P0052’s scope guards.
+(And if and when `<scope>` is standardized, you can simply replace the include directive and namespace, and everything should work exactly the same.)
+
+## Library
+
+The following is only a brief overview of the provided library facilities.
+For details, see the revision of P0052 that is currently tracked by this project.
+
+### Scope guards
+
+The header `scope.hpp` provides 3 scope guards:
+
+*   `scope_exit`
+*   `scope_success`
+*   `scope_fail`
+
+All three scope guards can be initialized with a function or reference to a function, which is then called when the scope guard is destroyed.
+The only difference between the three scope guards are the conditions when the function is called.
+
+| Scope guard     | When function is called                                                    |
+|-----------------|----------------------------------------------------------------------------|
+| `scope_exit`    | Whenever the scope guard is destroyed.                                     |
+| `scope_success` | Only if the scope guard is destroyed normally (*not* via stack unwinding). |
+| `scope_fail`    | Only if the scope guard is destroyed via stack unwinding.                  |
+
+Example:
+
+```lang-c++
+auto f()
+{
+    auto const s1 = scope_exit   {[] { std::cout << "exit!"; }};
+    auto const s2 = scope_success{[] { std::cout << "good!"; }};
+    auto const s3 = scope_fail   {[] { std::cout << "fail!"; }};
+
+    // [...]
+
+    // "fail!" will be printed ONLY if an exception was thrown above.
+    // "good!" will be printed ONLY if an exception was *NOT* thrown.
+    // "exit!" will be printed, no matter what happened above.
+}
+```
+
+All scope guards also have a `release()` member function, that prevents the wrapped function from being called under any circumstances.
