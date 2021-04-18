@@ -105,3 +105,37 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 		BOOST_TEST(call_count == 1);
 	}
 }
+
+/*****************************************************************************
+ * Special operations
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_default_constructible, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_default_constructible_v<indi::scope_fail<Func>>);
+	BOOST_TEST(not std::is_default_constructible_v<indi::scope_fail<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_constructible, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_fail<Func>>);
+	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_fail<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_assignable, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_fail<Func>>);
+	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_fail<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_move_assignable, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_move_assignable_v<indi::scope_fail<Func>>);
+	BOOST_TEST(not std::is_move_assignable_v<indi::scope_fail<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(destructor_noexcept, Func, indi_test::nonthrowing_functors<int>)
+{
+	BOOST_TEST(std::is_nothrow_destructible_v<indi::scope_fail<Func>>);
+	BOOST_TEST(std::is_nothrow_destructible_v<indi::scope_fail<Func&>>);
+}
