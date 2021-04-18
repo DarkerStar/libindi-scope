@@ -243,16 +243,19 @@ public:
 	template <typename EFP>
 	explicit scope_success(EFP&& f)
 	:
-		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)}
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)},
+		_uncaught_on_creation{std::uncaught_exceptions()}
 	{}
 
 	~scope_success()
 	{
-		_exit_function();
+		if (std::uncaught_exceptions() <= _uncaught_on_creation)
+			_exit_function();
 	}
 
 private:
 	EF _exit_function;
+	int _uncaught_on_creation = 0;
 };
 
 template <typename EF>
