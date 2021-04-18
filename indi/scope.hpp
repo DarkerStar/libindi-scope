@@ -236,6 +236,17 @@ private:
 template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
+template <typename EF>
+class scope_success
+{
+public:
+	template <typename EFP>
+	explicit scope_success(EFP&&) {}
+};
+
+template <typename EF>
+scope_success(EF) -> scope_success<EF>;
+
 } // inline namespace v1
 } // namespace indi
 
