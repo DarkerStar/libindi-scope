@@ -237,6 +237,10 @@ private:
 template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
+// scope_fail<EF>
+//
+// scope_fail is a scope guard that calls its contained function only in
+// the case that it is destroyed during stack unwinding.
 template <typename EF>
 class scope_fail : public _detail_X_scope::scope_guard_base<EF>
 {
