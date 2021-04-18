@@ -242,9 +242,13 @@ class scope_fail
 public:
 	template <typename EFP>
 	explicit scope_fail(EFP&& f)
-	:
+	try :
 		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)}
 	{}
+	catch (...)
+	{
+		f();
+	}
 
 	~scope_fail()
 	{
