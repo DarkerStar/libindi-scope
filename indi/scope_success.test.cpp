@@ -127,3 +127,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_assignable, Func, indi_test::all_functors
 	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_success<Func>>);
 	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_success<Func&>>);
 }
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_move_assignable, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_move_assignable_v<indi::scope_success<Func>>);
+	BOOST_TEST(not std::is_move_assignable_v<indi::scope_success<Func&>>);
+}
