@@ -24,6 +24,8 @@
 #	include <boost/test/included/unit_test.hpp>
 #endif // BOOST_TEST_DYN_LINK
 
+#include <indi/scope.hpp>
+
 BOOST_AUTO_TEST_CASE(dummy)
 {
 	// Do nothing.
