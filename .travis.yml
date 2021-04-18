@@ -90,7 +90,7 @@ install:
     if [ ! -d ${BOOST_SLUG}/boost ]
     then
       # Setup environment
-      BOOST_TAR="boost_${BOOST_SLUG}.tar.gz"
+      BOOST_TAR="${BOOST_SLUG}.tar.gz"
       BOOST_URL="https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_TAR}"
       echo "'${BOOST_TAR}'"
       echo "'${BOOST_URL}'"
