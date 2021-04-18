@@ -236,6 +236,11 @@ private:
 template <typename EF>
 scope_exit(EF) -> scope_exit<EF>;
 
+// scope_success<EF>
+//
+// scope_success is a scope guard that calls its contained function only in
+// the case that it is destroyed under normal conditions (not stack
+// unwinding).
 template <typename EF>
 class scope_success : public _detail_X_scope::scope_guard_base<EF>
 {
