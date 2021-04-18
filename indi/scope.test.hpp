@@ -114,7 +114,7 @@ struct copy_only_functor_t : functor_base<T>
 
 	copy_only_functor_t(copy_only_functor_t const&) = default;
 
-	auto operator()() { functor_base<T>::increment_counter(); }
+	auto operator()() const noexcept { functor_base<T>::increment_counter(); }
 
 	copy_only_functor_t(copy_only_functor_t&&) = delete;
 
@@ -134,7 +134,7 @@ struct move_throws_functor_t : functor_base<T>
 	move_throws_functor_t(move_throws_functor_t const&) = default;
 	move_throws_functor_t(move_throws_functor_t&&) noexcept(false) = default;
 
-	auto operator()() { functor_base<T>::increment_counter(); }
+	auto operator()() const noexcept { functor_base<T>::increment_counter(); }
 
 	auto operator=(move_throws_functor_t const&) -> move_throws_functor_t& = delete;
 	auto operator=(move_throws_functor_t&&) -> move_throws_functor_t& = delete;
@@ -189,8 +189,6 @@ using throwing_functors = std::tuple<
 	functor_t<T>,
 	const_functor_t<T>,
 	move_only_functor_t<T>,
-	copy_only_functor_t<T>,
-	move_throws_functor_t<T>,
 	immobile_functor_t<T>
 >;
 
@@ -198,7 +196,9 @@ using throwing_functors = std::tuple<
 template <typename T>
 using nonthrowing_functors = std::tuple<
 	noexcept_functor_t<T>,
-	const_noexcept_functor_t<T>
+	const_noexcept_functor_t<T>,
+	copy_only_functor_t<T>,
+	move_throws_functor_t<T>
 >;
 
 // List of all test functors.

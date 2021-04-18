@@ -247,7 +247,8 @@ public:
 		_uncaught_on_creation{std::uncaught_exceptions()}
 	{}
 
-	~scope_success() noexcept(noexcept(_exit_function()))
+	~scope_success()
+		noexcept(noexcept(_exit_function()))
 	{
 		if (std::uncaught_exceptions() <= _uncaught_on_creation)
 			_exit_function();
