@@ -262,6 +262,9 @@ public:
 			_exit_function();
 	}
 
+	auto release() noexcept -> void
+	{}
+
 private:
 	EF _exit_function;
 	int _uncaught_on_creation = 0;
