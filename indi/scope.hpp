@@ -241,7 +241,18 @@ class scope_success
 {
 public:
 	template <typename EFP>
-	explicit scope_success(EFP&&) {}
+	explicit scope_success(EFP&& f)
+	:
+		_exit_function{_detail_X_scope::move_init_if_noexcept<EF, EFP>(f)}
+	{}
+
+	~scope_success()
+	{
+		_exit_function();
+	}
+
+private:
+	EF _exit_function;
 };
 
 template <typename EF>
