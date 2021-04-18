@@ -115,21 +115,15 @@ install:
   - |
     if [ ! -d ${BOOST_SLUG}/boost ]
     then
-      # Setup environment
-      BOOST_TAR="${BOOST_SLUG}.tar.gz"
-      BOOST_URL="https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_TAR}"
       # Download
-      travis_retry wget --quiet "${BOOST_URL}" || exit 1
+      travis_retry wget --quiet https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_SLUG}.tar.gz || exit 1
       # Expand
-      tar -xf "${BOOST_TAR}" || exit 1
+      tar -xf ${BOOST_SLUG}.tar.gz || exit 1
       # Clean up
-      rm -f -- "${BOOST_TAR}"
-      unset BOOST_URL
-      unset BOOST_TAR
+      rm -f -- ${BOOST_SLUG}.tar.gz
     fi
   # Restore build environment
   - cd -- "${TRAVIS_BUILD_DIR}"
 
 script:
-  - pwd
   - make test
