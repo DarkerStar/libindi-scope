@@ -87,7 +87,7 @@ install:
   - cd -- ${HOME}
   # Get Boost if necessary.
   - |
-    if ! cd -- ${BOOST_SLUG} 2>/dev/null
+    if [ ! -d ${BOOST_SLUG}/boost ]
     then
       # Setup environment
       BOOST_TAR="boost_${BOOST_SLUG}.tar.gz"
