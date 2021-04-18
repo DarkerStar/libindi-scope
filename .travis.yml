@@ -25,7 +25,7 @@ language: cpp
 cache:
   ccache : true
   directories:
-    - ${TRAVIS_BUILD_DIR}/boost_1_75_0
+    - ${HOME}/boost_1_75_0
 
 jobs:
   include:
@@ -38,7 +38,7 @@ jobs:
             - g++-10
       env:
         - CXX: g++-10
-        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${BOOST_ROOT}\""
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
       if: branch IN (main, develop)
 
     - name: Clang 10 on Linux
@@ -52,7 +52,7 @@ jobs:
             - clang-10
       env:
         - CXX: clang++-10
-        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${BOOST_ROOT}\""
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
       if: branch IN (main, develop)
 
     - name: Clang 10 on Linux with libc++
@@ -66,29 +66,31 @@ jobs:
             - clang-10
       env:
         - CXX: clang++-10
-        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I ${BOOST_ROOT}\""
+        - CXXFLAGS: "\"-std=c++20 -stdlib=libc++ -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
       if: branch IN (main, develop)
 
 env:
   global:
     - BOOST_VERSION: 1.75.0
-    - BOOST_ROOT: "\"${TRAVIS_BUILD_DIR}/boost_$(printf '%s' ${BOOST_VERSION} | sed 's/\\./_/g')\""
+    - BOOST_SLUG: "\"boost_$(printf '%s' ${BOOST_VERSION} | sed 's/\\./_/g')\""
     - MAKEFLAGS: "'-j 3'"
 
 before_install:
   - echo "'${BOOST_VERSION}'"
-  - echo "'${BOOST_ROOT}'"
+  - echo "'${BOOST_SLUG}'"
   - echo "'${MAKEFLAGS}'"
   - echo "'${CXX}'"
   - echo "'${CXXFLAGS}'"
 
 install:
+  # Switch to home directory to install stuff
+  - cd -- ${HOME}
   # Get Boost if necessary.
   - |
-    if ! cd -- "${BOOST_ROOT}" 2>/dev/null
+    if ! cd -- ${BOOST_SLUG} 2>/dev/null
     then
       # Setup environment
-      BOOST_TAR="boost_$(printf '%s' "${BOOST_VERSION}" | sed 's/\./_/g').tar.gz"
+      BOOST_TAR="boost_${BOOST_SLUG}.tar.gz"
       BOOST_URL="https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_TAR}"
       echo "'${BOOST_TAR}'"
       echo "'${BOOST_URL}'"
@@ -97,12 +99,15 @@ install:
       # Expand
       tar -xf "${BOOST_TAR}" || exit 1
       # Clean up
+      ls -l
       rm -f -- "${BOOST_TAR}"
+      pwd
+      ls -l
       unset BOOST_URL
       unset BOOST_TAR
-    else
-      cd -- "${TRAVIS_BUILD_DIR}"
     fi
+  # Restore build environment
+  - cd -- "${TRAVIS_BUILD_DIR}"
 
 script:
   - pwd
