@@ -26,6 +26,7 @@ cache:
   ccache : true
   directories:
     - ${HOME}/boost_1_75_0
+    - ${HOME}/boost_1_76_0
 
 jobs:
   include:
@@ -103,7 +104,7 @@ jobs:
 
 env:
   global:
-    - BOOST_VERSION: 1.75.0
+    - BOOST_VERSION: 1.76.0
     - BOOST_SLUG: "\"boost_$(printf '%s' ${BOOST_VERSION} | sed 's/\\./_/g')\""
     - MAKEFLAGS: "'-j 3'"
 
