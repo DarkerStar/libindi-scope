@@ -25,7 +25,6 @@
 #endif // BOOST_TEST_DYN_LINK
 
 #include <memory>
-#include <tuple>
 
 #include <indi/scope.hpp>
 
