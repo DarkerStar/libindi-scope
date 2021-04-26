@@ -25,174 +25,10 @@
 #endif // BOOST_TEST_DYN_LINK
 
 #include <memory>
-#include <tuple>
 
 #include <indi/scope.hpp>
 
-namespace indi_test {
-
-/*****************************************************************************
- * Test exception type.
- *
- * Used to have a unique type for exceptions that can't possibly be thrown
- * by non-test code.
- ****************************************************************************/
-
-struct exception {};
-
-/*****************************************************************************
- * Test function objects.
- *
- * All of these function objects take a reference to a counter `int`. Each
- * time the call operator is used, the counter is incremented.
- ****************************************************************************/
-
-// Base class for function objects.
-//
-// Handles all the boilerplate machinery for getting and keeping the reference
-// to the counter, and incrementing it.
-template <typename T>
-class functor_base
-{
-public:
-	constexpr explicit functor_base(T& counter) noexcept : _p_counter{&counter} {}
-
-	constexpr auto increment_counter() const noexcept -> void { ++(*_p_counter); }
-
-protected:
-	T* _p_counter = nullptr;
-};
-
-// Basic functor.
-template <typename T>
-struct functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	auto operator()() { functor_base<T>::increment_counter(); }
-};
-
-// Functor with `const` call.
-template <typename T>
-struct const_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	auto operator()() const { functor_base<T>::increment_counter(); }
-};
-
-// Functor with `noexcept` call.
-template <typename T>
-struct noexcept_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	auto operator()() noexcept { functor_base<T>::increment_counter(); }
-};
-
-// Functor with call operator that is both `const` and `noexcept`.
-template <typename T>
-struct const_noexcept_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	auto operator()() const noexcept { functor_base<T>::increment_counter(); }
-};
-
-// Functor that is move(-construct)-only.
-template <typename T>
-struct move_only_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	move_only_functor_t(move_only_functor_t&&) noexcept = default;
-
-	auto operator()() { functor_base<T>::increment_counter(); }
-
-	move_only_functor_t(move_only_functor_t const&) = delete;
-
-	auto operator=(move_only_functor_t const&) -> move_only_functor_t& = delete;
-	auto operator=(move_only_functor_t&&) -> move_only_functor_t& = delete;
-};
-
-// Functor that is copy(-construct)-only.
-template <typename T>
-struct copy_only_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	copy_only_functor_t(copy_only_functor_t const&) = default;
-
-	auto operator()() { functor_base<T>::increment_counter(); }
-
-	copy_only_functor_t(copy_only_functor_t&&) = delete;
-
-	auto operator=(copy_only_functor_t const&) -> copy_only_functor_t& = delete;
-	auto operator=(copy_only_functor_t&&) -> copy_only_functor_t& = delete;
-};
-
-// Functor that with `noexcept` copy and non-`noexcept` move.
-//
-// Because the move constructor might throw, it should never be used by
-// `scope_exit`. Instead, the copy constructor should be used.
-template <typename T>
-struct move_throws_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	move_throws_functor_t(move_throws_functor_t const&) = default;
-	move_throws_functor_t(move_throws_functor_t&&) noexcept(false) = default;
-
-	auto operator()() { functor_base<T>::increment_counter(); }
-
-	auto operator=(move_throws_functor_t const&) -> move_throws_functor_t& = delete;
-	auto operator=(move_throws_functor_t&&) -> move_throws_functor_t& = delete;
-};
-
-// Functor that is non-copyable, and non-movable.
-//
-// Because it cannot be copied or moved, it can only be used as an lvalue
-// reference.
-template <typename T>
-struct immobile_functor_t : functor_base<T>
-{
-	using functor_base<T>::functor_base;
-
-	auto operator()() { functor_base<T>::increment_counter(); }
-
-	immobile_functor_t(immobile_functor_t const&) = delete;
-	immobile_functor_t(immobile_functor_t&&) = delete;
-
-	auto operator=(immobile_functor_t const&) -> immobile_functor_t& = delete;
-	auto operator=(immobile_functor_t&&) -> immobile_functor_t& = delete;
-};
-
-// List of functors that can be used as lvalue arguments to scope_exit.
-template <typename T>
-using lvalue_functors = std::tuple<
-	functor_t<T>,
-	const_functor_t<T>,
-	noexcept_functor_t<T>,
-	const_noexcept_functor_t<T>,
-	move_only_functor_t<T>,
-	copy_only_functor_t<T>,
-	move_throws_functor_t<T>,
-	immobile_functor_t<T>
->;
-
-// List of functors that can be used as rvalue arguments to scope_exit.
-template <typename T>
-using rvalue_functors = std::tuple<
-	functor_t<T>,
-	const_functor_t<T>,
-	noexcept_functor_t<T>,
-	const_noexcept_functor_t<T>,
-	move_only_functor_t<T>,
-	copy_only_functor_t<T>,
-	move_throws_functor_t<T>
->;
-
-} // namespace indi_test
+#include <indi/scope.test.hpp>
 
 /*****************************************************************************
  * Basic operation tests
@@ -480,4 +316,38 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(
 
 	p_scope_guard_2.reset();
 	BOOST_TEST(call_count == 0, "function called despite release");
+}
+
+/*****************************************************************************
+ * Special operations
+ ****************************************************************************/
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_default_constructible, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_default_constructible_v<indi::scope_exit<Func>>);
+	BOOST_TEST(not std::is_default_constructible_v<indi::scope_exit<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_constructible, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_exit<Func>>);
+	BOOST_TEST(not std::is_copy_constructible_v<indi::scope_exit<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_copy_assignable, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_exit<Func>>);
+	BOOST_TEST(not std::is_copy_assignable_v<indi::scope_exit<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(not_move_assignable, Func, indi_test::all_functors<int>)
+{
+	BOOST_TEST(not std::is_move_assignable_v<indi::scope_exit<Func>>);
+	BOOST_TEST(not std::is_move_assignable_v<indi::scope_exit<Func&>>);
+}
+
+BOOST_AUTO_TEST_CASE_TEMPLATE(destructor_noexcept, Func, indi_test::nonthrowing_functors<int>)
+{
+	BOOST_TEST(std::is_nothrow_destructible_v<indi::scope_exit<Func>>);
+	BOOST_TEST(std::is_nothrow_destructible_v<indi::scope_exit<Func&>>);
 }
