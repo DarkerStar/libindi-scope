@@ -128,7 +128,7 @@ install:
     if [ ! -d ${BOOST_SLUG}/boost ]
     then
       # Download
-      travis_retry wget --quiet https://dl.bintray.com/boostorg/release/${BOOST_VERSION}/source/${BOOST_SLUG}.tar.gz || exit 1
+      travis_retry wget --quiet https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION}/source/${BOOST_SLUG}.tar.gz || exit 1
       # Expand
       tar -xf ${BOOST_SLUG}.tar.gz || exit 1
       # Clean up
