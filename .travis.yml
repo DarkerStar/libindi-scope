@@ -41,6 +41,19 @@ jobs:
         - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
       if: branch IN (main, develop)
 
+    - name: GCC 11 on Linux
+      addons:
+        apt:
+          update: true
+          sources:
+            - sourceline: 'ppa:ubuntu-toolchain-r/test'
+          packages:
+            - g++-11
+      env:
+        - CXX: g++-11
+        - CXXFLAGS: "\"-std=c++20 -pedantic -Wall -Wextra -I ${HOME}/${BOOST_SLUG}\""
+      if: branch IN (main, develop)
+
     - name: Clang 11 on Linux
       addons:
         apt:
